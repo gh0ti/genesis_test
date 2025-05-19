@@ -1,42 +1,38 @@
-FROM php:8.1-fpm
-LABEL authors="avicber"
+FROM php:8.2-fpm
+
+WORKDIR /var/www
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    locales \
-    zip \
-    jpegoptim optipng pngquant gifsicle \
-    vim \
-    unzip \
     git \
     curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
     libzip-dev
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install extensions
-RUN docker-php-ext-install pdo_mysql zip exif pcntl
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-RUN docker-php-ext-install gd
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Install composer
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www
+# Create system user
+RUN groupadd -g 1000 www && \
+    useradd -u 1000 -ms /bin/bash -g www www
 
-# Copy existing application directory
-COPY . .
+# Copy application files
+COPY --chown=www:www . /var/www
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www
+# Set working directory permissions
+RUN chown -R www:www /var/www
 
-# Expose port 9000
+USER www
+
 EXPOSE 9000
-
 CMD ["php-fpm"]

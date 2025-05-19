@@ -13,14 +13,13 @@ return new class extends Migration
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('city_id')->constrained()->onDelete('cascade');
-            $table->enum('frequency', ['hourly', 'daily', 'weekly']);
-            $table->timestamp('last_notification_at')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('email')->unique();
+            $table->foreignId('city_id')->constrained(table: 'cities', indexName: 'subscription_city_id')->onDelete('cascade');
+            $table->string('frequency')->default('daily');
+            $table->boolean('active')->default(true);
+            $table->string('confirmation_token')->nullable();
+            $table->string('unsubscribe_token')->nullable();
             $table->timestamps();
-
-            $table->unique(['user_id', 'city_id']);
         });
     }
 
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('subscriptions');
+        Schema::dropIfExists('subscription');
     }
 };
